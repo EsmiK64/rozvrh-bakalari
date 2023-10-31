@@ -42,7 +42,7 @@ function App() {
     // Use the selectedClass value for the fetch request
     try {
       const response = await fetch(
-        "http://localhost:3001/api/fetch-timetable",
+        "/api/fetch-timetable",
         {
           method: "POST",
           headers: {
