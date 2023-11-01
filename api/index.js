@@ -61,6 +61,7 @@ app.post('/api/fetch-timetable', async (req, res) => {
                 lessonTime = lessonParts[1];
               }
               return {
+                type: parsedData.type,
                 subject,
                 day,
                 lessonNumber,
@@ -78,11 +79,11 @@ app.post('/api/fetch-timetable', async (req, res) => {
               };
             } else if (parsedData.type == "removed") {
               return {
-                type: "removed",
+                type: parsedData.type,
               };
             } else if (parsedData.type == "absent") {
               return {
-                type: "absent",
+                type: parsedData.type,
               };
             } else {
               return {
