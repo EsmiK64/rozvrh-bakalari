@@ -125,34 +125,45 @@ app.post("/api/fetch-groups", async (req, res) => {
     );
 
     const html = await response.text();
-
     const { document } = new JSDOM(html).window;
 
     const timetableRowDivs = document.querySelectorAll(".bk-timetable-row");
 
-    const uniqueGroups = new Set(); // To collect unique groups
-
     if (timetableRowDivs.length > 0) {
+      const timetable = {};
+
       Array.from(timetableRowDivs).forEach((row) => {
-        const dayItemHoverDivs = row.querySelectorAll(".day-item-hover");
-        Array.from(dayItemHoverDivs).forEach((item) => {
+        const dayItems = row.querySelectorAll(".day-item");
+        const dayData = {};
+
+        Array.from(dayItems).forEach((item) => {
           const dataDetail = item.getAttribute("data-detail");
           try {
             const parsedData = JSON.parse(dataDetail);
 
             if (parsedData.group) {
-              uniqueGroups.add(parsedData.group);
+              const groupName = parsedData.group;
+              const groupLetter = groupName.match(/[A-Z]+\d+/);
+              if (groupLetter) {
+                const letter = groupLetter[0];
+                if (!dayData[letter]) {
+                  dayData[letter] = [];
+                }
+                if (!dayData[letter].includes(groupName)) {
+                  dayData[letter].push(groupName);
+                }
+              }
             }
           } catch (error) {
-            console.error("Invalid JSON:", error);
+            // Handle JSON parse error
           }
         });
+
+        timetable[row.getAttribute("data-day")] = dayData;
       });
+
+      res.json({ timetable });
     }
-
-    const groupsArray = Array.from(uniqueGroups); // Convert the set to an array
-
-    res.status(200).json(groupsArray);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch data" });
