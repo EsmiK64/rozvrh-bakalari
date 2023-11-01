@@ -1,14 +1,12 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import { Button, Form, Row, Col } from "react-bootstrap";
-
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
   const [selectedClass, setSelectedClass] = useState("");
   const [result, setResult] = useState(null);
   const [selectOptionsHTML, setSelectOptionsHTML] = useState("");
+  const [groupsArray, setGroupsArray] = useState([]);
 
   const handleSelectChange = (e) => {
     setSelectedClass(e.target.value);
@@ -39,10 +37,9 @@ function App() {
   }, []);
 
   const fetchTimetable = async () => {
-    // Use the selectedClass value for the fetch request
     try {
       const response = await fetch(
-        "/api/fetch-timetable",
+        "http://localhost:3001/api/fetch-timetable",
         {
           method: "POST",
           headers: {
@@ -54,6 +51,22 @@ function App() {
 
       if (response.ok) {
         const data = await response.json();
+
+        const uniqueGroups = new Set();
+
+        for (const day of data.timetable) {
+          for (const lessons of Object.values(day)) {
+            for (const lesson of lessons) {
+              const group = lesson.group;
+              if (group) {
+                uniqueGroups.add(group);
+              }
+            }
+          }
+        }
+
+        setGroupsArray(Array.from(uniqueGroups));
+
         setResult(data);
       } else {
         console.error("Failed to fetch data");
@@ -80,6 +93,7 @@ function App() {
           </Col>
         </Row>
       </div>
+      <pre className="my-3">{groupsArray.join(", ")}</pre><br />
       {result && <pre>{JSON.stringify(result, null, 2)}</pre>}
     </div>
   );
