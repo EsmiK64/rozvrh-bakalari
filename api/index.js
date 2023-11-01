@@ -1,7 +1,7 @@
-import express from 'express';
-import fetch from 'node-fetch';
-import { JSDOM } from 'jsdom';
-import cors from 'cors';
+import express from "express";
+import fetch from "node-fetch";
+import { JSDOM } from "jsdom";
+import cors from "cors";
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.post('/api/fetch-timetable', async (req, res) => {
+app.post("/api/fetch-timetable", async (req, res) => {
   const classInput = req.body.class;
 
   try {
@@ -20,32 +20,38 @@ app.post('/api/fetch-timetable', async (req, res) => {
     let response;
 
     if (currentDay === 0 || currentDay === 6) {
-      response = await fetch(`https://bakalari.spse.cz/bakaweb/Timetable/Public/Next/Class/${classInput}`); // weekend next week
+      response = await fetch(
+        `https://bakalari.spse.cz/bakaweb/Timetable/Public/Next/Class/${classInput}`
+      ); // weekend next week
     } else {
-      response = await fetch(`https://bakalari.spse.cz/bakaweb/Timetable/Public/Actual/Class/${classInput}`); // workday current week
+      response = await fetch(
+        `https://bakalari.spse.cz/bakaweb/Timetable/Public/Actual/Class/${classInput}`
+      ); // workday current week
     }
 
     const html = await response.text();
 
     const { document } = new JSDOM(html).window;
 
-    const timetableRowDivs = document.querySelectorAll('.bk-timetable-row');
+    const timetableRowDivs = document.querySelectorAll(".bk-timetable-row");
 
     if (timetableRowDivs.length > 0) {
       const daysData = [];
 
       Array.from(timetableRowDivs).forEach((row) => {
-        const daySpan = row.querySelector('.bk-day-day');
-        const dayText = daySpan ? daySpan.textContent : 'Day not found';
+        const daySpan = row.querySelector(".bk-day-day");
+        const dayText = daySpan ? daySpan.textContent : "Day not found";
 
-        const dayItemHoverDivs = row.querySelectorAll('.day-item-hover');
+        const dayItemHoverDivs = row.querySelectorAll(".day-item-hover");
         const dayItemsData = Array.from(dayItemHoverDivs).map((item) => {
-          const dataDetail = item.getAttribute('data-detail');
+          const dataDetail = item.getAttribute("data-detail");
           try {
             const parsedData = JSON.parse(dataDetail);
 
             if (parsedData.type == "atom") {
-              const subjectTextParts = parsedData.subjecttext.split('|').map(part => part.trim());
+              const subjectTextParts = parsedData.subjecttext
+                .split("|")
+                .map((part) => part.trim());
               const subject = subjectTextParts[0];
               const day = subjectTextParts[1];
               const lesson = subjectTextParts[2];
@@ -91,7 +97,7 @@ app.post('/api/fetch-timetable', async (req, res) => {
               };
             }
           } catch (error) {
-            return 'Invalid JSON';
+            return "Invalid JSON";
           }
         });
 
@@ -100,11 +106,56 @@ app.post('/api/fetch-timetable', async (req, res) => {
 
       res.json({ timetable: daysData });
     } else {
-      res.status(404).json({ error: 'No divs with class "bk-timetable-row" found in the HTML.' });
+      res.status(404).json({
+        error: 'No divs with class "bk-timetable-row" found in the HTML.',
+      });
     }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch data' });
+    res.status(500).json({ error: "Failed to fetch data" });
+  }
+});
+
+app.post("/api/fetch-groups", async (req, res) => {
+  const classInput = req.body.class;
+
+  try {
+    const response = await fetch(
+      `https://bakalari.spse.cz/bakaweb/Timetable/Public/Permanent/Class/${classInput}`
+    );
+
+    const html = await response.text();
+
+    const { document } = new JSDOM(html).window;
+
+    const timetableRowDivs = document.querySelectorAll(".bk-timetable-row");
+
+    const uniqueGroups = new Set(); // To collect unique groups
+
+    if (timetableRowDivs.length > 0) {
+      Array.from(timetableRowDivs).forEach((row) => {
+        const dayItemHoverDivs = row.querySelectorAll(".day-item-hover");
+        Array.from(dayItemHoverDivs).forEach((item) => {
+          const dataDetail = item.getAttribute("data-detail");
+          try {
+            const parsedData = JSON.parse(dataDetail);
+
+            if (parsedData.group) {
+              uniqueGroups.add(parsedData.group);
+            }
+          } catch (error) {
+            console.error("Invalid JSON:", error);
+          }
+        });
+      });
+    }
+
+    const groupsArray = Array.from(uniqueGroups); // Convert the set to an array
+
+    res.status(200).json(groupsArray);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch data" });
   }
 });
 
