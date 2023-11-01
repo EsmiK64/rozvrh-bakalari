@@ -24,7 +24,7 @@ app.post('/api/fetch-timetable', async (req, res) => {
     } else {
       response = await fetch(`https://bakalari.spse.cz/bakaweb/Timetable/Public/Actual/Class/${classInput}`); // workday current week
     }
-    
+
     const html = await response.text();
 
     const { document } = new JSDOM(html).window;
@@ -43,23 +43,23 @@ app.post('/api/fetch-timetable', async (req, res) => {
           const dataDetail = item.getAttribute('data-detail');
           try {
             const parsedData = JSON.parse(dataDetail);
-            const subjectTextParts = parsedData.subjecttext.split('|').map(part => part.trim());
-            const subject = subjectTextParts[0];
-            const day = subjectTextParts[1];
-            const lesson = subjectTextParts[2];
-
-            const lessonRegex = /(\d+) \((\d+:\d+ - \d+:\d+)\)/;
-            const lessonParts = lesson.match(lessonRegex);
-
-            let lessonNumber;
-            let lessonTime;
-
-            if (lessonParts) {
-              lessonNumber = lessonParts[0];
-              lessonTime = lessonParts[1];
-            }
 
             if (parsedData.type == "atom") {
+              const subjectTextParts = parsedData.subjecttext.split('|').map(part => part.trim());
+              const subject = subjectTextParts[0];
+              const day = subjectTextParts[1];
+              const lesson = subjectTextParts[2];
+
+              const lessonRegex = /(\d+) \((\d+:\d+ - \d+:\d+)\)/;
+              const lessonParts = lesson.match(lessonRegex);
+
+              let lessonNumber;
+              let lessonTime;
+
+              if (lessonParts) {
+                lessonNumber = lessonParts[0];
+                lessonTime = lessonParts[1];
+              }
               return {
                 subject,
                 day,
