@@ -6,10 +6,9 @@ function App() {
   const [selectedClass, setSelectedClass] = useState("");
   const [result, setResult] = useState(null);
   const [selectOptionsHTML, setSelectOptionsHTML] = useState("");
-  const [selectElements, setSelectElements] = useState([]); // Declare selectElements
+  const [selectElements, setSelectElements] = useState([]);
+  const [checkboxElements, setCheckboxElements] = useState([]);
   const [showGroupsForm, setShowGroupsForm] = useState(false);
-  const [checkboxes, setCheckboxes] = useState({});
-  const [selectedGroup, setSelectedGroup] = useState("");
 
   const handleSelectChange = (e) => {
     setSelectedClass(e.target.value);
@@ -27,7 +26,8 @@ function App() {
 
         const selectElement = doc.getElementById("selectedClass");
         if (selectElement) {
-          setSelectOptionsHTML(selectElement.innerHTML);
+          const selectHTML = selectElement.innerHTML;
+          setSelectOptionsHTML(selectHTML);
         }
       } catch (error) {
         console.error("Failed to fetch class options:", error);
@@ -40,7 +40,7 @@ function App() {
   const fetchTimetable = async () => {
     try {
       const response = await fetch(
-        "http://localhost:3001/api/fetch-timetable",
+        "/api/fetch-timetable",
         {
           method: "POST",
           headers: {
@@ -50,109 +50,130 @@ function App() {
         }
       );
 
-      function separateArrays(inputArray) {
-        const result = {};
-      
-        inputArray.forEach(item => {
-          const key = item.match(/[A-Z]+/)[0];
-          if (!result[key]) {
-            result[key] = [];
-          }
-      
-          result[key].push(item);
-        });
-      
-        // Separate 'DV' and 'CM'
-        result['special'] = [];
-        inputArray.forEach(item => {
-          if (item === 'DV' || item === 'CM') {
-            result['special'].push(item);
-          }
-        });
-      
-        return result;
-      }
-    
-  
       if (response.ok) {
         const data = await response.json();
-        const selectGroup = [];
-        const checkboxGroup = [];
         const groups = [];
-  
+
         for (const day of data.timetable) {
           for (const lessons of Object.values(day)) {
             for (const lesson of lessons) {
               const group = lesson.group;
               if (group) {
-                  groups.push(group);
-                }
+                groups.push(group);
               }
             }
           }
         }
-        const uniqueGroups = [...new Set(groups)];
-
-        uniqueGroups = separateArrays(uniqueGroups);
-
+        let uniqueGroups = [...new Set(groups)];
+        const groupsText = uniqueGroups.toString();
         console.log(uniqueGroups);
-  
-        const selectElements = [];
 
-        for (const key in uniqueGroups) {
-          console.log(uniqueGroups[key]);
-          if (uniqueSelectGroup.includes(uniqueGroups[key])) {
-            const options = uniqueGroups[key].map((lesson) => (
-              <option key={lesson.id} value={lesson.group}>
-                {lesson.group}
-              </option>
-            ));
-            selectElements.push(
-              <Col key={key}>
-                <Form.Select onChange={handleGroupSelectChange}>
-                  <option value="" disabled>
-                    Select a group
-                  </option>
-                  {options}
-                </Form.Select>
+        const checkboxes = [];
+        let selects = [];
+        const option = [];
+
+        uniqueGroups.forEach((group) => {
+          const option = [];
+
+          if (group === "DV") {
+            checkboxes.push(
+              <Col key="DV">
+                <Form.Check id="DV" label="DV" />
               </Col>
             );
+            console.log("DV");
+          } else if (group === "CM") {
+            checkboxes.push(
+              <Col key="CM">
+                <Form.Check id="CM" label="CM" />
+              </Col>
+            );
+            console.log("CM");
           } else {
-            const checkbox = (
-              <Col key={key}>
-                <Form.Check
-                  type="checkbox"
-                  label={uniqueGroups[key]}
-                  checked={checkboxes[key]}
-                  onChange={() => handleCheckboxChange(key)}
-                />
+            const letter = (group.match(/[a-zA-Z]+/) || [""])[0];
+            console.log(letter);
+
+            const regex = new RegExp(`${letter}\\d`, "g");
+            let selectsArray = [...groupsText.matchAll(regex)].map(
+              (match) => match[0]
+            );
+
+            console.log(selectsArray);
+            selectsArray = selectsArray.sort();
+
+            selectsArray.forEach((groupFinal) => {
+              option.push(<option value={groupFinal}>{groupFinal}</option>);
+            });
+
+            const selectId = letter;
+
+            const push = (
+              <Col key={selectId}>
+                <Form.Select id={selectId}>{option}</Form.Select>
               </Col>
             );
-            selectElements.push(checkbox);
+
+            console.log(checkboxes);
+
+            if (
+              !selects.some(
+                (existingSelect) => existingSelect.props.id === selectId
+              )
+            ) {
+              console.log(push);
+              selects.push(push);
+            }
           }
-        }        
-  
+        });
+
+        selects = selects.filter(
+          (select, index, array) =>
+            array.findIndex((s) => s.key === select.key) === index
+        );
+
+        console.log(selects);
+
         setResult(data);
-        setShowGroupsForm(true);
-        setSelectElements(selectElements);
-      } else {
-        console.error("Failed to fetch data");
+        setSelectElements(selects);
+        setCheckboxElements(checkboxes);
       }
+
+      setShowGroupsForm(true);
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const filterTimetable = () => {
+    if (selectElements.length === 0) {
+      // No groups selected
+      return;
+    }
+  
+    // Get the selected groups
+    const selectedGroups = selectElements.map((select) => select.props.id);
+  
+    // Filter the entire timetable data based on the selected groups
+    const filteredTimetable = result.timetable.map((day) => {
+      const filteredDay = Object.entries(day).reduce((acc, [key, lessons]) => {
+        const filteredLessons = lessons.filter(
+          (lesson) => lesson.group === null || selectedGroups.includes(lesson.group)
+        );
+        if (filteredLessons.length > 0) {
+          acc[key] = filteredLessons;
+        }
+        return acc;
+      }, {});
+  
+      return Object.keys(filteredDay).length > 0 ? filteredDay : null;
+    });
+  
+    // Create a new JSON object with the filtered timetable
+    const filteredResult = { timetable: filteredTimetable.filter(Boolean) };
+  
+    // Update the state with the filtered result
+    setResult(filteredResult);
   };  
-
-  const handleGroupSelectChange = (e) => {
-    setSelectedGroup(e.target.value);
-  };
-
-  const handleCheckboxChange = (group) => {
-    setCheckboxes((prevCheckboxes) => ({
-      ...prevCheckboxes,
-      [group]: !prevCheckboxes[group],
-    }));
-  };
 
   return (
     <div className="container p-3">
@@ -170,14 +191,18 @@ function App() {
             <Button onClick={fetchTimetable}>Fetch Timetable</Button>
           </Col>
         </Row>
-        {showGroupsForm && (
-          <Row className="my-3">
-            {selectElements}
-            <Col>
-              <Button onClick={fetchTimetable}>Fetch Selected Group</Button>
-            </Col>
-          </Row>
-        )}
+        <Row>
+          {selectElements}
+          {checkboxElements}
+          <Col>
+            <Button onClick={filterTimetable}>Filter Timetable</Button>
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <p>4.H má posraný skupiny sorry</p>
+          </Col>
+        </Row>
       </div>
       {result && <pre className="my-3">{JSON.stringify(result, null, 2)}</pre>}
     </div>

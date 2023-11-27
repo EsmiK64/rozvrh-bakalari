@@ -42,66 +42,72 @@ app.post("/api/fetch-timetable", async (req, res) => {
         const daySpan = row.querySelector(".bk-day-day");
         const dayText = daySpan ? daySpan.textContent : "Day not found";
 
-        const dayItemHoverDivs = row.querySelectorAll(".day-item-hover");
-        const dayItemsData = Array.from(dayItemHoverDivs).map((item) => {
-          const dataDetail = item.getAttribute("data-detail");
-          try {
-            const parsedData = JSON.parse(dataDetail);
+        if (row.querySelectorAll(".day-item-volno").lenght === 0) {
+          return {
+            type: "volno",
+          };
+        } else {
+          const dayItemHoverDivs = row.querySelectorAll(".day-item-hover");
+          const dayItemsData = Array.from(dayItemHoverDivs).map((item) => {
+            const dataDetail = item.getAttribute("data-detail");
+            try {
+              const parsedData = JSON.parse(dataDetail);
 
-            if (parsedData.type == "atom") {
-              const subjectTextParts = parsedData.subjecttext
-                .split("|")
-                .map((part) => part.trim());
-              const subject = subjectTextParts[0];
-              const day = subjectTextParts[1];
-              const lesson = subjectTextParts[2];
+              if (parsedData.type == "atom") {
+                const subjectTextParts = parsedData.subjecttext
+                  .split("|")
+                  .map((part) => part.trim());
+                const subject = subjectTextParts[0];
+                const day = subjectTextParts[1];
+                const lesson = subjectTextParts[2];
 
-              const lessonRegex = /(\d+) \((\d+:\d+ - \d+:\d+)\)/;
-              const lessonParts = lesson.match(lessonRegex);
+                const lessonRegex = /(\d+) \((\d+:\d+ - \d+:\d+)\)/;
+                const lessonParts = lesson.match(lessonRegex);
 
-              let lessonNumber;
-              let lessonTime;
+                let lessonNumber;
+                let lessonTime;
 
-              if (lessonParts) {
-                lessonNumber = lessonParts[0];
-                lessonTime = lessonParts[1];
+                if (lessonParts) {
+                  lessonNumber = lessonParts[1];
+                  lessonTime = lessonParts[2];
+                }
+
+                return {
+                  type: parsedData.type,
+                  subject,
+                  day,
+                  lessonNumber,
+                  lessonTime,
+                  teacher: parsedData.teacher,
+                  room: parsedData.room,
+                  group: parsedData.group,
+                  theme: parsedData.theme,
+                  notice: parsedData.notice,
+                  changeinfo: parsedData.changeinfo,
+                  homeworks: parsedData.homeworks,
+                  absencetext: parsedData.absencetext,
+                  hasAbsent: parsedData.hasAbsent,
+                  absentInfoText: parsedData.absentInfoText,
+                };
+              } else if (parsedData.type == "removed") {
+                return {
+                  type: parsedData.type,
+                };
+              } else if (parsedData.type == "absent") {
+                return {
+                  type: parsedData.type,
+                };
+              } else {
+                return {
+                  error: "Unexpected lesson property returned.",
+                };
               }
-              return {
-                type: parsedData.type,
-                subject,
-                day,
-                lessonNumber,
-                lessonTime,
-                teacher: parsedData.teacher,
-                room: parsedData.room,
-                group: parsedData.group,
-                theme: parsedData.theme,
-                notice: parsedData.notice,
-                changeinfo: parsedData.changeinfo,
-                homeworks: parsedData.homeworks,
-                absencetext: parsedData.absencetext,
-                hasAbsent: parsedData.hasAbsent,
-                absentInfoText: parsedData.absentInfoText,
-              };
-            } else if (parsedData.type == "removed") {
-              return {
-                type: parsedData.type,
-              };
-            } else if (parsedData.type == "absent") {
-              return {
-                type: parsedData.type,
-              };
-            } else {
-              return {
-                error: "Unexpected lesson property returned.",
-              };
+            } catch (error) {
+              return "Invalid JSON";
             }
-          } catch (error) {
-            return "Invalid JSON";
-          }
-        });
-
-        daysData.push({ [dayText]: dayItemsData });
+          });
+          daysData.push({ [dayText]: dayItemsData });
+        }
       });
 
       res.json({ timetable: daysData });
