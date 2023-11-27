@@ -9,6 +9,7 @@ function App() {
   const [selectElements, setSelectElements] = useState([]);
   const [checkboxElements, setCheckboxElements] = useState([]);
   const [showGroupsForm, setShowGroupsForm] = useState(false);
+  let announcementText = "";
 
   const handleSelectChange = (e) => {
     setSelectedClass(e.target.value);
@@ -40,7 +41,7 @@ function App() {
   const fetchTimetable = async () => {
     try {
       const response = await fetch(
-        "/api/fetch-timetable",
+        "http://localhost:3001/api/fetch-timetable",
         {
           method: "POST",
           headers: {
@@ -66,7 +67,6 @@ function App() {
         }
         let uniqueGroups = [...new Set(groups)];
         const groupsText = uniqueGroups.toString();
-        console.log(uniqueGroups);
 
         const checkboxes = [];
         let selects = [];
@@ -74,53 +74,42 @@ function App() {
 
         uniqueGroups.forEach((group) => {
           const option = [];
+          const letter = (group.match(/[a-zA-Z]+/) || [""])[0];
 
-          if (group === "DV") {
+          const regex = new RegExp(`${letter}\\d`, "g");
+          let selectsArray = [...groupsText.matchAll(regex)].map(
+            (match) => match[0]
+          );
+
+          selectsArray = selectsArray.sort();
+
+          selectsArray.forEach((groupFinal) => {
+            option.push(<option value={groupFinal}>{groupFinal}</option>);
+          });
+
+          if (option.length === 1) {
             checkboxes.push(
-              <Col key="DV">
-                <Form.Check id="DV" label="DV" />
+              <Col key={group}>
+                <Form.Check id={group} label={group} name={group} />
               </Col>
             );
-            console.log("DV");
-          } else if (group === "CM") {
-            checkboxes.push(
-              <Col key="CM">
-                <Form.Check id="CM" label="CM" />
-              </Col>
-            );
-            console.log("CM");
           } else {
-            const letter = (group.match(/[a-zA-Z]+/) || [""])[0];
-            console.log(letter);
-
-            const regex = new RegExp(`${letter}\\d`, "g");
-            let selectsArray = [...groupsText.matchAll(regex)].map(
-              (match) => match[0]
-            );
-
-            console.log(selectsArray);
-            selectsArray = selectsArray.sort();
-
-            selectsArray.forEach((groupFinal) => {
-              option.push(<option value={groupFinal}>{groupFinal}</option>);
-            });
-
             const selectId = letter;
 
             const push = (
               <Col key={selectId}>
-                <Form.Select id={selectId}>{option}</Form.Select>
+                <label htmlFor={selectId}>Vyber skupinu...</label>
+                <Form.Select id={selectId} defaultValue="" name={selectId}>
+                  {option}
+                </Form.Select>
               </Col>
             );
-
-            console.log(checkboxes);
 
             if (
               !selects.some(
                 (existingSelect) => existingSelect.props.id === selectId
               )
             ) {
-              console.log(push);
               selects.push(push);
             }
           }
@@ -130,8 +119,6 @@ function App() {
           (select, index, array) =>
             array.findIndex((s) => s.key === select.key) === index
         );
-
-        console.log(selects);
 
         setResult(data);
         setSelectElements(selects);
@@ -144,36 +131,47 @@ function App() {
     }
   };
 
-  const filterTimetable = () => {
-    if (selectElements.length === 0) {
-      // No groups selected
-      return;
-    }
-  
-    // Get the selected groups
-    const selectedGroups = selectElements.map((select) => select.props.id);
-  
-    // Filter the entire timetable data based on the selected groups
+  const handleFilterTimetable = (e) => {
+    e.preventDefault();
+
+    let selectedGroups = document.querySelectorAll(
+      ".form select, .form input[type='checkbox']:checked"
+    );
+    selectedGroups = Array.from(selectedGroups).map((group) => group.value);
+
     const filteredTimetable = result.timetable.map((day) => {
-      const filteredDay = Object.entries(day).reduce((acc, [key, lessons]) => {
-        const filteredLessons = lessons.filter(
-          (lesson) => lesson.group === null || selectedGroups.includes(lesson.group)
-        );
-        if (filteredLessons.length > 0) {
-          acc[key] = filteredLessons;
+      const filteredLessons = {};
+      console.log(filteredLessons);
+
+      if (filteredLessons.length === 0) {
+        return filteredLessons;
+      } else {
+        for (const [key, lessons] of Object.entries(day)) {
+          const filteredGroupLessons = lessons.filter((lesson) => {
+            const lessonGroup = lesson.group;
+
+            return (
+              !lessonGroup ||
+              lessonGroup === null ||
+              selectedGroups.includes(lessonGroup)
+            );
+          });
+
+          if (filteredGroupLessons.length > 0) {
+            filteredLessons[key] = filteredGroupLessons;
+          } else {
+            // If the day has no lessons, keep it as is
+            filteredLessons[key] = lessons;
+          }
         }
-        return acc;
-      }, {});
-  
-      return Object.keys(filteredDay).length > 0 ? filteredDay : null;
+
+        announcementText = "Timetable filtered succesfully.";
+        return filteredLessons;
+      }
     });
-  
-    // Create a new JSON object with the filtered timetable
-    const filteredResult = { timetable: filteredTimetable.filter(Boolean) };
-  
-    // Update the state with the filtered result
-    setResult(filteredResult);
-  };  
+
+    setResult({ timetable: filteredTimetable });
+  };
 
   return (
     <div className="container p-3">
@@ -191,16 +189,19 @@ function App() {
             <Button onClick={fetchTimetable}>Fetch Timetable</Button>
           </Col>
         </Row>
-        <Row>
-          {selectElements}
-          {checkboxElements}
-          <Col>
-            <Button onClick={filterTimetable}>Filter Timetable</Button>
-          </Col>
-        </Row>
+        <Form onSubmit={handleFilterTimetable}>
+          <Row className="d-flex align-items-center form">
+            {selectElements}
+            {checkboxElements}
+            <Col>
+              <Button type="submit">Filter Timetable</Button>
+            </Col>
+          </Row>
+        </Form>
         <Row>
           <Col>
             <p>4.H má posraný skupiny sorry</p>
+            <p id={announcementText}></p>
           </Col>
         </Row>
       </div>
