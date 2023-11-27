@@ -41,7 +41,7 @@ function App() {
   const fetchTimetable = async () => {
     try {
       const response = await fetch(
-        "http://localhost:3001/api/fetch-timetable",
+        "/api/fetch-timetable",
         {
           method: "POST",
           headers: {
