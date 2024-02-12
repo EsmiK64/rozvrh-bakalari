@@ -47,26 +47,25 @@ app.post("/api/fetch-timetable", async (req, res) => {
           const dataDetail = item.getAttribute("data-detail");
           try {
             const parsedData = JSON.parse(dataDetail);
+            const subjectTextParts = parsedData.subjecttext
+              .split("|")
+              .map((part) => part.trim());
+            const subject = subjectTextParts[0];
+            const day = subjectTextParts[1];
+            const lesson = subjectTextParts[2];
 
-            if (parsedData.type == "atom") {
-              const subjectTextParts = parsedData.subjecttext
-                .split("|")
-                .map((part) => part.trim());
-              const subject = subjectTextParts[0];
-              const day = subjectTextParts[1];
-              const lesson = subjectTextParts[2];
+            const lessonRegex = /(\d+) \((\d+:\d+ - \d+:\d+)\)/;
+            const lessonParts = lesson.match(lessonRegex);
 
-              const lessonRegex = /(\d+) \((\d+:\d+ - \d+:\d+)\)/;
-              const lessonParts = lesson.match(lessonRegex);
+            let lessonNumber;
+            let lessonTime;
 
-              let lessonNumber;
-              let lessonTime;
+            if (lessonParts) {
+              lessonNumber = lessonParts[1];
+              lessonTime = lessonParts[2];
+            }
 
-              if (lessonParts) {
-                lessonNumber = lessonParts[1];
-                lessonTime = lessonParts[2];
-              }
-
+            if (parsedData.type === "atom") {
               return {
                 type: parsedData.type,
                 subject,
@@ -84,21 +83,22 @@ app.post("/api/fetch-timetable", async (req, res) => {
                 hasAbsent: parsedData.hasAbsent,
                 absentInfoText: parsedData.absentInfoText,
               };
-            } else if (parsedData.type == "removed") {
+            } else if (parsedData.type === "absent") {
               return {
                 type: parsedData.type,
-              };
-            } else if (parsedData.type == "absent") {
-              return {
-                type: parsedData.type,
+                subject,
+                day,
+                lessonNumber,
+                lessonTime,
+                absencetext: parsedData.absentinfo,
+                absentInfoText: parsedData.InfoAbsentName,
+                removedInfo: parsedData.removedinfo,
               };
             } else {
-              return {
-                error: "Unexpected lesson property returned.",
-              };
+              return "what the fuck bro";
             }
           } catch (error) {
-            return "Invalid JSON";
+            return "Invalid JSON" + error;
           }
         });
         daysData.push({ [dayText]: dayItemsData });

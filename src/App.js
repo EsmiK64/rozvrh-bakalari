@@ -70,7 +70,7 @@ function App() {
 
         const checkboxes = [];
         let selects = [];
-        const option = [];
+        //const option = [];
 
         uniqueGroups.forEach((group) => {
           const option = [];
