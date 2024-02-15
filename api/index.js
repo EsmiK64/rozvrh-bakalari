@@ -47,25 +47,26 @@ app.post("/api/fetch-timetable", async (req, res) => {
           const dataDetail = item.getAttribute("data-detail");
           try {
             const parsedData = JSON.parse(dataDetail);
-            const subjectTextParts = parsedData.subjecttext
-              .split("|")
-              .map((part) => part.trim());
-            const subject = subjectTextParts[0];
-            const day = subjectTextParts[1];
-            const lesson = subjectTextParts[2];
-
-            const lessonRegex = /(\d+) \((\d+:\d+ - \d+:\d+)\)/;
-            const lessonParts = lesson.match(lessonRegex);
-
-            let lessonNumber;
-            let lessonTime;
-
-            if (lessonParts) {
-              lessonNumber = lessonParts[1];
-              lessonTime = lessonParts[2];
-            }
 
             if (parsedData.type === "atom") {
+              const subjectTextParts = parsedData.subjecttext
+                .split("|")
+                .map((part) => part.trim());
+              const subject = subjectTextParts[0];
+              const day = subjectTextParts[1];
+              const lesson = subjectTextParts[2];
+
+              const lessonRegex = /(\d+) \((\d+:\d+ - \d+:\d+)\)/;
+              const lessonParts = lesson.match(lessonRegex);
+
+              let lessonNumber;
+              let lessonTime;
+
+              if (lessonParts) {
+                lessonNumber = lessonParts[1];
+                lessonTime = lessonParts[2];
+              }
+
               return {
                 type: parsedData.type,
                 subject,
@@ -83,10 +84,25 @@ app.post("/api/fetch-timetable", async (req, res) => {
                 hasAbsent: parsedData.hasAbsent,
                 absentInfoText: parsedData.absentInfoText,
               };
-            } else if (parsedData.type === "absent") {
+            } else if (parsedData.type === "absent" || parsedData.type === "removed") {
+              const subjectTextParts = parsedData.subjecttext
+                .split("|")
+                .map((part) => part.trim());
+              const day = subjectTextParts[0];
+              const lesson = subjectTextParts[1];
+
+              const lessonRegex = /(\d+) \((\d+:\d+ - \d+:\d+)\)/;
+              const lessonParts = lesson.match(lessonRegex);
+
+              let lessonNumber;
+              let lessonTime;
+
+              if (lessonParts) {
+                lessonNumber = lessonParts[1];
+                lessonTime = lessonParts[2];
+              }
               return {
                 type: parsedData.type,
-                subject,
                 day,
                 lessonNumber,
                 lessonTime,

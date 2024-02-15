@@ -41,7 +41,7 @@ function App() {
   const fetchTimetable = async () => {
     try {
       const response = await fetch(
-        "/api/fetch-timetable",
+        "http://localhost:3001/api/fetch-timetable",
         {
           method: "POST",
           headers: {
@@ -99,7 +99,7 @@ function App() {
             const push = (
               <Col key={selectId}>
                 <label htmlFor={selectId}>Vyber skupinu...</label>
-                <Form.Select id={selectId} defaultValue="" name={selectId}>
+                <Form.Select id={selectId} defaultValue="" name={selectId} key={selectId}>
                   {option}
                 </Form.Select>
               </Col>
@@ -141,7 +141,6 @@ function App() {
 
     const filteredTimetable = result.timetable.map((day) => {
       const filteredLessons = {};
-      console.log(filteredLessons);
 
       if (filteredLessons.length === 0) {
         return filteredLessons;
@@ -189,18 +188,18 @@ function App() {
             <Button onClick={fetchTimetable}>Fetch Timetable</Button>
           </Col>
         </Row>
-        <Form onSubmit={handleFilterTimetable}>
-          <Row className="d-flex align-items-center form">
-            {selectElements}
-            {checkboxElements}
-            <Col>
-              <Button type="submit">Filter Timetable</Button>
-            </Col>
-          </Row>
-        </Form>
+        {showGroupsForm &&
+          <Form onSubmit={handleFilterTimetable}>
+            <Row className="d-flex align-items-center form">
+              {selectElements}
+              {checkboxElements}
+              <Col>
+                <Button type="submit">Filter Timetable</Button>
+              </Col>
+            </Row>
+          </Form>}
         <Row>
           <Col>
-            <p>4.H má posraný skupiny sorry</p>
             <p id={announcementText}></p>
           </Col>
         </Row>
