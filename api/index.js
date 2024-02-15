@@ -2,7 +2,6 @@ import express from "express";
 import fetch from "node-fetch";
 import { JSDOM } from "jsdom";
 import cors from "cors";
-import { DOMParser } from "xmldom";
 const app = express();
 const port = process.env.PORT || 3001;
 

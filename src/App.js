@@ -18,7 +18,7 @@ function App() {
   useEffect(() => {
     const fetchClassOptions = async () => {
       try {
-        const response = await fetch("http://localhost:3001/fetch-classes", { method: "POST" });
+        const response = await fetch("/api/fetch-classes", { method: "POST" });
         if (!response.ok) {
           throw new Error(`Failed to fetch class options. Status: ${response.status}`);
         }
@@ -37,7 +37,7 @@ function App() {
   const fetchTimetable = async () => {
     try {
       const response = await fetch(
-        "http://localhost:3001/api/fetch-timetable",
+        "/api/fetch-timetable",
         {
           method: "POST",
           headers: {
