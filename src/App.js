@@ -18,25 +18,21 @@ function App() {
   useEffect(() => {
     const fetchClassOptions = async () => {
       try {
-        const response = await fetch(
-          "https://bakalari.spse.cz/bakaweb/Timetable/Public/"
-        );
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-
-        const selectElement = doc.getElementById("selectedClass");
-        if (selectElement) {
-          const selectHTML = selectElement.innerHTML;
-          setSelectOptionsHTML(selectHTML);
+        const response = await fetch("http://localhost:3001/fetch-classes", { method: "POST" });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch class options. Status: ${response.status}`);
         }
+  
+        const data = await response.text();
+        setSelectOptionsHTML(data);
       } catch (error) {
-        console.error("Failed to fetch class options:", error);
+        console.error('Error:', error);
       }
     };
-
+  
     fetchClassOptions();
   }, []);
+  
 
   const fetchTimetable = async () => {
     try {

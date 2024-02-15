@@ -2,7 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 import { JSDOM } from "jsdom";
 import cors from "cors";
-
+import { DOMParser } from "xmldom";
 const app = express();
 const port = process.env.PORT || 3001;
 
@@ -129,6 +129,29 @@ app.post("/api/fetch-timetable", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to fetch data" });
+  }
+});
+
+app.post("/fetch-classes", async (req, res) => {
+  try {
+    const response = await fetch('https://bakalari.spse.cz/bakaweb/Timetable/Public/');
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch classes. Status: ${response.status}`);
+    }
+
+    const html = await response.text();
+    const { document } = new JSDOM(html).window;
+
+
+    const select = document.querySelector("#selectedClass").innerHTML;
+
+    res.status(200).send(select);
+  } catch (error) {
+    console.error('Error in /fetch-classes:', error);
+    res.status(500).json({
+      error: 'Failed to fetch class options.',
+    });
   }
 });
 
