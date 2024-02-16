@@ -131,7 +131,7 @@ app.post("/api/fetch-timetable", async (req, res) => {
   }
 });
 
-app.post("/fetch-classes", async (req, res) => {
+app.post("/api/fetch-classes", async (req, res) => {
   try {
     const response = await fetch('https://bakalari.spse.cz/bakaweb/Timetable/Public/');
 
@@ -147,7 +147,7 @@ app.post("/fetch-classes", async (req, res) => {
 
     res.status(200).send(select);
   } catch (error) {
-    console.error('Error in /fetch-classes:', error);
+    console.error('Error in /api/fetch-classes:', error);
     res.status(500).json({
       error: 'Failed to fetch class options.',
     });
