@@ -142,10 +142,12 @@ app.post("/api/fetch-classes", async (req, res) => {
     const html = await response.text();
     const { document } = new JSDOM(html).window;
 
+    const selectOptions = Array.from(document.querySelectorAll("#selectedClass option")).map(option => ({
+      value: option.value,
+      label: option.textContent.trim(),
+    }));
 
-    const select = document.querySelector("#selectedClass").innerHTML;
-
-    res.status(200).send(select);
+    res.status(200).json(selectOptions);
   } catch (error) {
     console.error('Error in /api/fetch-classes:', error);
     res.status(500).json({

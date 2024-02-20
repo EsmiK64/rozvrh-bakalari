@@ -5,7 +5,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 function App() {
   const [selectedClass, setSelectedClass] = useState("");
   const [result, setResult] = useState(null);
-  const [selectOptionsHTML, setSelectOptionsHTML] = useState("");
+  const [selectOptionsHTML, setSelectOptionsHTML] = useState([]);
   const [selectElements, setSelectElements] = useState([]);
   const [checkboxElements, setCheckboxElements] = useState([]);
   const [showGroupsForm, setShowGroupsForm] = useState(false);
@@ -19,20 +19,22 @@ function App() {
     const fetchClassOptions = async () => {
       try {
         const response = await fetch("/api/fetch-classes", { method: "POST" });
+
         if (!response.ok) {
           throw new Error(`Failed to fetch class options. Status: ${response.status}`);
         }
-  
-        const data = await response.text();
+
+        const data = await response.json(); // Assuming the API returns JSON
+
         setSelectOptionsHTML(data);
       } catch (error) {
         console.error('Error:', error);
       }
     };
-  
+
     fetchClassOptions();
   }, []);
-  
+
 
   const fetchTimetable = async () => {
     try {
@@ -174,11 +176,13 @@ function App() {
       <div>
         <Row className="my-3">
           <Col>
-            <Form.Select
-              value={selectedClass}
-              onChange={handleSelectChange}
-              dangerouslySetInnerHTML={{ __html: selectOptionsHTML }}
-            />
+            <Form.Select onChange={handleSelectChange}>
+              {selectOptionsHTML.map((option, index) => (
+                <option key={index} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Form.Select>
           </Col>
           <Col>
             <Button onClick={fetchTimetable}>Fetch Timetable</Button>
