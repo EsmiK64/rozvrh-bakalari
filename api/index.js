@@ -39,8 +39,32 @@ app.post("/api/fetch-timetable", async (req, res) => {
 
       Array.from(timetableRowDivs).forEach((row) => {
         const daySpan = row.querySelector(".bk-day-day");
-        const dayText = daySpan ? daySpan.textContent : "Day not found";
-
+        let dayText;
+        
+        if (daySpan) {
+            switch (daySpan.textContent) {
+                case "po":
+                    dayText = "Pondělí";
+                    break;
+                case "út":
+                    dayText = "Úterý";
+                    break;
+                case "st":
+                    dayText = "Středa";
+                    break;
+                case "čt":
+                    dayText = "Čtvrtek";
+                    break;
+                case "pá":
+                    dayText = "Pátek";
+                    break;
+                default:
+                    dayText = "Error: unexpected string in day.";
+            }
+        } else {
+            dayText = "Error: unexpected string in day.";
+        }
+        
         const dayItemHoverDivs = row.querySelectorAll(".day-item-hover");
         const dayItemsData = Array.from(dayItemHoverDivs).map((item) => {
           const dataDetail = item.getAttribute("data-detail");
