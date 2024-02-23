@@ -10,7 +10,8 @@ function Classes() {
   const [checkboxElements, setCheckboxElements] = useState([]);
   const [showGroupsForm, setShowGroupsForm] = useState(false);
   let announcementText = "";
-  const apiRoute = "http://localhost:3001";
+  //const apiRoute = "http://localhost:3001";
+  const apiRoute = "";
 
   const handleSelectChange = (e) => {
     setSelectedClass(e.target.value);

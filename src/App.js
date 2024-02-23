@@ -5,7 +5,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 function App() {
  return (
   <>
-    <h1>Rozzvrh Bakaláři demo</h1>
+    <h1>Rozvrh Bakaláři demo</h1>
     <Button href="/classes">Třídy</Button>
     <Button href="/teachers">Učitelé</Button>
   </>

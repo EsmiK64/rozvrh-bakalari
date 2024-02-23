@@ -8,8 +8,9 @@ function Teachers() {
   const [selectOptionsHTML, setSelectOptionsHTML] = useState([]);
   let announcementText = "";
 
-  const apiRoute = "http://localhost:3001";
-
+  //const apiRoute = "http://localhost:3001";
+  const apiRoute = "";
+  
   const handleSelectChange = (e) => {
     setSelectedTeacher(e.target.value);
   };
